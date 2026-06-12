@@ -94,6 +94,9 @@ const Icon = {
   paw: (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="6" cy="9" r="2"/><circle cx="10" cy="5" r="2"/><circle cx="14" cy="5" r="2"/><circle cx="18" cy="9" r="2"/><path d="M12 11c-3 0-6 2.5-6 5.5C6 19 8 20 10 20c1 0 1.5-.5 2-.5s1 .5 2 .5c2 0 4-1 4-3.5 0-3-3-5.5-6-5.5z"/></svg>
   ),
+  cat: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4l2.5 5"/><path d="M20 4l-2.5 5"/><path d="M5 9c0 6 2.5 11 7 11s7-5 7-11"/><path d="M5 9h14"/><path d="M9.5 15c.7.6 1.8.6 2.5.6s1.8 0 2.5-.6"/><path d="M9 12h.01"/><path d="M15 12h.01"/></svg>
+  ),
   shield: (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
   ),
@@ -166,37 +169,52 @@ function Field({label, children, full, error, locked, required, mandatoryPublic,
 
 function TopNav({ onDark, onNav, active, isLoggedIn, setLoggedIn, onboardingComplete, minimal }) {
   const profileTarget = onboardingComplete ? 'myprofile' : 'kennel';
+  const [menuOpen, setMenuOpen] = useState(false);
+  const go = (id) => { setMenuOpen(false); onNav(id); };
   return (
-    <div className={"topnav" + (onDark ? " on-dark" : "")}>
+    <div className={"topnav" + (onDark ? " on-dark" : "") + (menuOpen ? " menu-open" : "")}>
       <a
         href="#"
-        onClick={e=>{e.preventDefault(); onNav('landing');}}
+        onClick={e=>{e.preventDefault(); go('landing');}}
         className="brand brand-wordmark"
         aria-label="Paw Print Pedigrees home"
       >
         <img src={(typeof window !== 'undefined' && window.__resources && window.__resources.orivetLogo) || 'assets/orivet-logo.png'} alt="Orivet — Paw Print Genetics" className="wordmark" />
       </a>
       {!minimal && (
-        <div className="navlinks">
-          <a href="#" onClick={e=>{e.preventDefault(); onNav('search');}} className={active==='search'?'active':''}>Breeders</a>
-          <a href="#" onClick={e=>{e.preventDefault(); onNav('about');}} className={active==='about'?'active':''}>About</a>
-          {isLoggedIn && (
-            <button
-              className="btn btn-ghost btn-sm nav-logout"
-              onClick={()=>{ setLoggedIn && setLoggedIn(false); onNav('landing'); }}
-            >
-              Log Out
-            </button>
-          )}
-          {!(isLoggedIn && active === 'myprofile') && (
-            <button
-              className={"btn " + (onDark ? "btn-light" : "btn-primary")}
-              onClick={()=>onNav(isLoggedIn ? profileTarget : 'signup')}
-            >
-              {isLoggedIn ? 'My Profile' : 'Log In'} {Icon.arrowRight}
-            </button>
-          )}
-        </div>
+        <>
+          <button
+            type="button"
+            className="nav-toggle"
+            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={menuOpen}
+            onClick={()=>setMenuOpen(o=>!o)}
+          >
+            <span></span><span></span><span></span>
+          </button>
+          <div className={"navlinks" + (menuOpen ? " is-open" : "")}>
+            <a href="#" onClick={e=>{e.preventDefault(); go('landing');}} className={active==='landing'?'active':''}>Home</a>
+            <a href="#" onClick={e=>{e.preventDefault(); go('search');}} className={active==='search'?'active':''}>Explore</a>
+            <a href="#" onClick={e=>{e.preventDefault(); go('responsible');}} className={active==='responsible'?'active':''}>Responsible Breeders</a>
+            <a href="#" onClick={e=>{e.preventDefault(); go('about');}} className={active==='about'?'active':''}>About</a>
+            {isLoggedIn && (
+              <button
+                className="btn btn-ghost btn-sm nav-logout"
+                onClick={()=>{ setMenuOpen(false); setLoggedIn && setLoggedIn(false); onNav('landing'); }}
+              >
+                Log Out
+              </button>
+            )}
+            {!(isLoggedIn && active === 'myprofile') && (
+              <button
+                className={"btn " + (onDark ? "btn-light" : "btn-primary")}
+                onClick={()=>go(isLoggedIn ? profileTarget : 'signup')}
+              >
+                {isLoggedIn ? 'My Profile' : 'Log In'} {Icon.arrowRight}
+              </button>
+            )}
+          </div>
+        </>
       )}
     </div>
   );
@@ -206,14 +224,26 @@ function TopNav({ onDark, onNav, active, isLoggedIn, setLoggedIn, onboardingComp
 function Landing({ onNav, isLoggedIn, onboardingComplete }) {
   const primaryAction = !isLoggedIn ? 'signup' : (onboardingComplete ? 'myprofile' : 'kennel');
   const primaryLabel = !isLoggedIn ? 'Create Breeder Profile' : (onboardingComplete ? 'Go to My Profile' : 'Continue Onboarding');
+  const [topSpecies, setTopSpecies] = useState('Canine');
+  const topList = topSpecies === 'Feline' ? TOP_CAT_BREEDS : TOP_DOG_BREEDS;
   return (
     <div>
       <TopNav onDark onNav={onNav} active="landing" isLoggedIn={isLoggedIn} onboardingComplete={onboardingComplete} />
       <section className="hero">
-        <div className="page">
+        <div className="hero-aurora" aria-hidden="true">
+          <span className="aurora-blob a1"></span>
+          <span className="aurora-blob a2"></span>
+          <span className="aurora-blob a3"></span>
+          <span className="hero-grain"></span>
+        </div>
+        <div className="page hero-content">
+          <div className="eyebrow">
+            <span className="eyebrow-pulse"></span>
+            Powered by Orivet genetic testing
+          </div>
           <h1>Paw Print <em>Pedigrees</em></h1>
           <p className="sub">
-            Welcome to Paw Print Pedigrees. Connecting responsible breeders with health-conscious pet owners.
+            The home of genetically tested dogs and cats — connecting responsible breeders with health-conscious pet owners.
           </p>
           <div className="role-cards">
             <div className="role-card is-primary">
@@ -241,26 +271,65 @@ function Landing({ onNav, isLoggedIn, onboardingComplete }) {
         </div>
       </section>
 
-      <section className="trust-strip">
+      <section className="top-breeds">
         <div className="page">
-          <div className="row">
-            {[
-              {ic: Icon.dna, h: 'Verified Genetic Testing'},
-              {ic: Icon.shield, h: 'Trusted Breeders'},
-              {ic: Icon.paw, h: 'Transparent Practices'},
-              {ic: Icon.globe, h: 'Health-Focused Standards'},
-            ].map((it,i)=>(
-              <div className="trust-item" key={i}>
-                <div className="ic">{it.ic}</div>
-                <h4>{it.h}</h4>
+          <div className="top-breeds-head">
+            <div>
+              <span className="top-breeds-kicker">Explore the network</span>
+              <h2>Top Breeds</h2>
+            </div>
+            <div className="top-breeds-controls">
+              <div className="species-toggle" role="tablist" aria-label="Choose species">
+                <button type="button" role="tab" aria-selected={topSpecies==='Canine'} className={topSpecies==='Canine'?'active':''} onClick={()=>setTopSpecies('Canine')}>{Icon.paw} Dogs</button>
+                <button type="button" role="tab" aria-selected={topSpecies==='Feline'} className={topSpecies==='Feline'?'active':''} onClick={()=>setTopSpecies('Feline')}>{Icon.cat} Cats</button>
               </div>
+              <button className="top-breeds-all" onClick={()=>onNav('search')}>
+                View all {Icon.arrowRight}
+              </button>
+            </div>
+          </div>
+          <div className="top-breeds-row">
+            {topList.map(b => (
+              <button className="breed-pill" key={b} onClick={()=>onNav('breed')} title={`Explore ${b}`}>
+                <span className={"breed-pill-img" + (BREED_IMAGES[b] ? '' : ' is-empty')} style={BREED_IMAGES[b] ? {backgroundImage:`url(${BREED_IMAGES[b]})`} : null}>
+                  {!BREED_IMAGES[b] && <span className="breed-pill-ph">{Icon.cat}</span>}
+                </span>
+                <span className="breed-pill-name">{b}</span>
+              </button>
             ))}
           </div>
-          <div className="trust-tagline">
-            <div className="ic">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+      </section>
+
+      <section className="trust-strip">
+        <div className="page">
+          <div className="trust-layout">
+            <div className="trust-lead">
+              <span className="trust-kicker">Why Paw Print Pedigrees</span>
+              <h2>Proof, not promises.</h2>
+              <p>Every profile is anchored in validated genetic evidence — so the standards you set are the ones clients can actually see.</p>
+              <div className="trust-tagline">
+                <div className="ic">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="3"/></svg>
+                </div>
+                <span>Elevating breeding standards through genetic insight</span>
+              </div>
             </div>
-            <span>Elevating breeding standards through genetic insight</span>
+            <div className="trust-grid">
+              {[
+                {ic: Icon.dna, h: 'Validated Genetic Testing', d: 'Results confirmed by Orivet — never self-reported.'},
+                {ic: Icon.shield, h: 'Trusted Breeders', d: 'A vetted network committed to higher standards.'},
+                {ic: Icon.paw, h: 'Transparent Practices', d: 'Health data shared openly, in plain language.'},
+                {ic: Icon.globe, h: 'Health-Focused Standards', d: 'Breeding decisions guided by genetic evidence.'},
+              ].map((it,i)=>(
+                <div className="trust-item" key={i}>
+                  <span className="trust-num">{String(i+1).padStart(2,'0')}</span>
+                  <div className="ic">{it.ic}</div>
+                  <h4>{it.h}</h4>
+                  <p>{it.d}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -274,28 +343,28 @@ function Landing({ onNav, isLoggedIn, onboardingComplete }) {
           <div className="matters-grid">
             {[
               {ic: (<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="11" r="2.5"/><path d="M5 18c0-2.2 1.8-4 4-4s4 1.8 4 4"/><line x1="15" y1="9" x2="19" y2="9"/><line x1="15" y1="13" x2="19" y2="13"/></svg>), h:'Present your kennel like a pro', items:[
-                'Upload your logo and image',
+                'Add your logo and image',
                 'Describe what sets you apart',
                 'Showcase your animals',
-                'Share your contact details',
-                'Share your website and social links',
-                'Share a link to your profile',
+                'Add contact details',
+                'Link your website and socials',
+                'Share your profile link',
               ]},
               {ic: (<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><circle cx="12" cy="16" r="1.4" fill="currentColor"/></svg>), h:'Publish ONLY What you Choose', items:[
                 'Disease screens',
-                'Traits test results',
+                'Trait results',
                 'Parentage confirmation',
                 'Heterozygosity scores',
-                'Breed and ancestry tests results',
-                'Keep any of your personal data and/or selected animals and data private',
+                'Breed & ancestry results',
+                'Keep any data or animals private',
               ]},
               {ic: (<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11.5 14.5 16 10"/></svg>), h:'Build Trust & Stand Out', items:[
-                'Verification of DNA test results',
-                'Clear and simple presentation — results anyone can understand',
-                'Transparency — sharing your results for everyone to see',
-                'Differentiation — stand out by demonstrating your commitment to health and excellence',
-                'Build Trust — here is the evidence',
-                'Be part of like-minded, health-focused breeder community',
+                'Validated DNA results',
+                'Clear, easy-to-read presentation',
+                'Full transparency',
+                'Stand out on health and quality',
+                'Evidence-backed trust',
+                'Join a health-focused community',
               ]},
             ].map((c,i)=>(
               <div className="matters-card" key={i}>
@@ -502,7 +571,7 @@ function SignUp({ onNav, setLoggedIn, onboardingComplete, setOnboardingComplete 
 /* ─────── 3. KENNEL PROFILE ─────── */
 /* Countries — synced from Orivet directory */
 const COUNTRIES = [
-  'Australia','United States','United Kingdom','Canada','New Zealand','Ireland',
+  'Australia','New Zealand','United States','Canada','United Kingdom',
   'Germany','France','Netherlands','Belgium','Spain','Portugal','Italy','Switzerland',
   'Austria','Denmark','Sweden','Norway','Finland','Iceland','Poland','Czechia',
   'Hungary','Greece','Turkey','Japan','South Korea','China','Singapore','Malaysia',
@@ -644,9 +713,16 @@ function KennelProfile({ onNav, variant, isLoggedIn, setLoggedIn, onboardingComp
   const [breeds, setBreeds] = useState(['Australian Shepherd', 'Border Collie']);
   const [breedInput, setBreedInput] = useState('');
   const [breedFocused, setBreedFocused] = useState(false);
+  const [profileSpecies, setProfileSpecies] = useState('Canine');
+  function changeProfileSpecies(sp) {
+    if (sp === profileSpecies) return;
+    setProfileSpecies(sp);
+    setBreeds(prev => prev.filter(b => speciesOf(b) === sp));
+    setBreedInput('');
+  }
   const breedQuery = breedInput.trim().toLowerCase();
   const breedSuggestions = breedQuery
-    ? BREEDS.filter(b => !breeds.includes(b) && b.toLowerCase().includes(breedQuery)).slice(0, 8)
+    ? BREEDS.filter(b => !breeds.includes(b) && speciesOf(b) === profileSpecies && b.toLowerCase().includes(breedQuery)).slice(0, 8)
     : [];
   function addBreed(b) {
     if (!b || breeds.includes(b)) return;
@@ -886,7 +962,19 @@ function KennelProfile({ onNav, variant, isLoggedIn, setLoggedIn, onboardingComp
               <Field label="First Name" required mandatoryPublic locked={!editOrivet} error={errors.firstName}><input value={firstName} onChange={e=>{setFirstName(e.target.value); if(errors.firstName) setErrors({...errors, firstName: undefined});}} disabled={!editOrivet} /></Field>
               <Field label="Last Name" required mandatoryPublic locked={!editOrivet} error={errors.lastName}><input value={lastName} onChange={e=>{setLastName(e.target.value); if(errors.lastName) setErrors({...errors, lastName: undefined});}} disabled={!editOrivet} /></Field>
               <Field label="Registration Number" required noEye locked={!editOrivet} error={errors.regNumber}><input value={regNumber} onChange={e=>{setRegNumber(e.target.value); if(errors.regNumber) setErrors({...errors, regNumber: undefined});}} disabled={!editOrivet} /></Field>
-              <Field label="Select Breed" required mandatoryPublic full error={errors.breeds}>
+              <Field label="Species" required mandatoryPublic>
+                <Dropdown
+                  ariaLabel="Species"
+                  value={profileSpecies}
+                  onChange={changeProfileSpecies}
+                  className="dd-field"
+                  options={[
+                    { value:'Canine', label:'Dogs' },
+                    { value:'Feline', label:'Cats' },
+                  ]}
+                />
+              </Field>
+              <Field label={`Select ${profileSpecies === 'Feline' ? 'Cat' : 'Dog'} Breed`} required mandatoryPublic full error={errors.breeds}>
                 <div className={"multiselect ms-autocomplete" + (breedFocused && breedSuggestions.length ? ' is-open' : '')}>
                   {breeds.map(b=>(
                     <span className="chip" key={b}>
@@ -896,7 +984,7 @@ function KennelProfile({ onNav, variant, isLoggedIn, setLoggedIn, onboardingComp
                   ))}
                   <input
                     className="ms-input"
-                    placeholder={breeds.length ? 'Add another breed…' : 'Search for a breed'}
+                    placeholder={breeds.length ? 'Add another breed…' : `Search for a ${profileSpecies === 'Feline' ? 'cat' : 'dog'} breed`}
                     value={breedInput}
                     onChange={e=>setBreedInput(e.target.value)}
                     onFocus={()=>setBreedFocused(true)}
@@ -1370,12 +1458,17 @@ const BREEDS = [
   'Labradoodle','Old English Mastiff','Irish Setter','Greyhound',
   'Border Terrier','Australian Cattle Dog',
   'British Shorthair','Maine Coon','Ragdoll','Bengal',
+  'Abyssinian','Birman','Bombay','American Shorthair','Balinese','Australian Mist',
 ];
 
-const BREED_SPECIES = {
-  'British Shorthair':'Feline','Maine Coon':'Feline','Ragdoll':'Feline','Bengal':'Feline',
-};
+const CAT_BREEDS = [
+  'British Shorthair','Maine Coon','Ragdoll','Bengal',
+  'Abyssinian','Birman','Bombay','American Shorthair','Balinese','Australian Mist',
+];
+const BREED_SPECIES = {};
+CAT_BREEDS.forEach(b => { BREED_SPECIES[b] = 'Feline'; });
 function speciesOf(breed) { return BREED_SPECIES[breed] || 'Canine'; }
+function speciesLabel(sp) { return sp === 'Feline' ? 'Cat' : 'Dog'; }
 
 /* Mock breeder index — searchable across name, breed, country, species */
 const SEARCH_BREEDERS = [
@@ -1397,17 +1490,32 @@ const SEARCH_BREEDERS = [
   {name:'Whisker Hollow',         breed:'British Shorthair',      country:'United Kingdom', loc:'Yorkshire',                 initials:'WH'},
   {name:'Coastal Coons',          breed:'Maine Coon',              country:'Australia',      loc:'Sunshine Coast, QLD',       initials:'CC'},
   {name:'Velvet Ragdolls',        breed:'Ragdoll',                 country:'Australia',      loc:'Melbourne, VIC',            initials:'VR'},
+  {name:'Spotted Royale',         breed:'Bengal',                  country:'Australia',      loc:'Perth, WA',                 initials:'SR'},
+  {name:'Nilewood Abyssinians',   breed:'Abyssinian',              country:'United States',  loc:'Portland, OR',              initials:'NA'},
+  {name:'Sacred Birmans',         breed:'Birman',                  country:'New Zealand',    loc:'Wellington',                initials:'SB'},
+  {name:'Mistvale Cattery',       breed:'Australian Mist',         country:'Australia',      loc:'Ballarat, VIC',             initials:'MC'},
+  {name:'Liberty Shorthairs',     breed:'American Shorthair',      country:'United States',  loc:'Austin, TX',                initials:'LS'},
   {name:'Rivermouth Spaniels',    breed:'Water Spaniel',           country:'Australia',      loc:'Coffs Harbour, NSW',        initials:'RS'},
   {name:'Wrinkle Ridge',          breed:'Shar Pei',                country:'Australia',      loc:'Newcastle, NSW',            initials:'WR'},
   {name:'Toorak Shih Tzus',       breed:'Shih Tzu',                country:'Australia',      loc:'Toorak, VIC',               initials:'TS'},
   {name:'Snubnose Pugs',          breed:'Pug',                     country:'United Kingdom', loc:'Brighton',                  initials:'SP'},
   {name:'Sunny Doodles',          breed:'Labradoodle',             country:'Australia',      loc:'Gold Coast, QLD',           initials:'SD'},
   {name:'Highmoor Mastiffs',      breed:'Old English Mastiff',     country:'United Kingdom', loc:'Devon',                     initials:'HM'},
-  {name:'Emerald Setters',        breed:'Irish Setter',            country:'Ireland',        loc:'Galway',                    initials:'ES'},
+  {name:'Emerald Setters',        breed:'Irish Setter',            country:'Canada',         loc:'Vancouver, BC',             initials:'ES'},
   {name:'Sprint Hounds',          breed:'Greyhound',               country:'Australia',      loc:'Geelong, VIC',              initials:'SH'},
   {name:'Tweed Terriers',         breed:'Border Terrier',          country:'United Kingdom', loc:'Northumberland',            initials:'TT'},
   {name:'Outback Heelers',        breed:'Australian Cattle Dog',   country:'Australia',      loc:'Alice Springs, NT',         initials:'OH'},
 ];
+
+/* Breeders who hold the Orivet Responsible Breeder accreditation (a subset). */
+const RESPONSIBLE_BREEDERS = new Set([
+  'Highridge Breeders', 'Coopers Run', 'Bluegum Shepherds', 'Macleod & Co.',
+  'Mossvale Breeders', 'Pacifica Poodles', 'Mountainview Berners',
+  'Cotswold Frenchies', 'Velvet Ragdolls', 'Outback Heelers', 'Driftwood Farm',
+  'Karri Forest Aussies', 'Stonebrook Dogs',
+  'Spotted Royale', 'Coastal Coons', 'Sacred Birmans',
+]);
+function isResponsibleBreeder(name) { return RESPONSIBLE_BREEDERS.has(name); }
 
 function resolveAsset(key, fallback) {
   if (typeof window !== 'undefined' && window.__resources && window.__resources[key]) {
@@ -1438,15 +1546,33 @@ const BREED_IMAGES = {
   'Bernese Mountain Dog':  resolveAsset('breedBerneseMountainDog', 'assets/breeds/bernese-mountain-dog.png'),
 };
 
+/* Most-searched breeds surfaced on the landing page, per species. */
+const TOP_DOG_BREEDS = [
+  'French Bulldog', 'Labrador Retriever', 'Australian Shepherd', 'Border Collie',
+  'Poodle', 'German Shepherd', 'Bernese Mountain Dog', 'Greyhound',
+];
+const TOP_CAT_BREEDS = [
+  'Maine Coon', 'Ragdoll', 'British Shorthair', 'Bengal',
+  'Abyssinian', 'Birman', 'Bombay', 'Australian Mist',
+];
+
 function SearchPage({ onNav, isLoggedIn, setLoggedIn }) {
   const [mode, setMode] = useState('Search by Breed');
-  const [species, setSpecies] = useState('Any');
+  const [species, setSpecies] = useState('Canine');
   const [country, setCountry] = useState('Any');
   const [query, setQuery] = useState('');
   const q = query.trim().toLowerCase();
 
-  // Country options derived from data so filters never miss
-  const availableCountries = Array.from(new Set(SEARCH_BREEDERS.map(b => b.country))).sort();
+  // Country options derived from data, in the canonical Orivet order
+  const COUNTRY_ORDER = ['Australia','New Zealand','United States','Canada','United Kingdom'];
+  const availableCountries = Array.from(new Set(SEARCH_BREEDERS.map(b => b.country)))
+    .sort((a, b) => {
+      const ia = COUNTRY_ORDER.indexOf(a), ib = COUNTRY_ORDER.indexOf(b);
+      if (ia === -1 && ib === -1) return a.localeCompare(b);
+      if (ia === -1) return 1;
+      if (ib === -1) return -1;
+      return ia - ib;
+    });
 
   // Apply species + country to breeder pool (used for both modes)
   const filteredBreeders = SEARCH_BREEDERS.filter(b => {
@@ -1477,29 +1603,28 @@ function SearchPage({ onNav, isLoggedIn, setLoggedIn }) {
     return acc;
   }, {});
 
-  const hasFilters = species !== 'Any' || country !== 'Any' || q.length > 0;
+  const hasFilters = country !== 'Any' || q.length > 0;
+  const popularBreeds = (species === 'Any' ? BREEDS : BREEDS.filter(b => speciesOf(b) === species)).slice(0, 4);
 
   return (
     <div>
       <TopNav onNav={onNav} active="search" isLoggedIn={isLoggedIn} setLoggedIn={setLoggedIn} />
       <div className="page">
         <div className="search-hero">
-          <h2>Search for Responsible Breeders</h2>
-          <div className="search-mode">
-            {['Search by Breed','Search by Breeder'].map(m=>(
-              <button key={m} className={mode===m?'active':''} onClick={()=>{setMode(m); setQuery('');}}>{m}</button>
-            ))}
+          <h2>Search Breeders and Breeds</h2>
+          <div className="species-seg" role="tablist" aria-label="Species">
+            <button type="button" role="tab" aria-selected={species==='Canine'} className={species==='Canine'?'active':''} onClick={()=>setSpecies('Canine')}>{Icon.paw} Dogs</button>
+            <button type="button" role="tab" aria-selected={species==='Feline'} className={species==='Feline'?'active':''} onClick={()=>setSpecies('Feline')}>{Icon.cat} Cats</button>
           </div>
           <div className="search-input">
             <Dropdown
-              ariaLabel="Species"
-              value={species}
-              onChange={setSpecies}
-              className="dd-species"
+              ariaLabel="Search type"
+              value={mode}
+              onChange={(v)=>{setMode(v); setQuery('');}}
+              className="dd-mode"
               options={[
-                { value:'Any', label:'Any species' },
-                { value:'Canine', label:'Canine' },
-                { value:'Feline', label:'Feline' },
+                { value:'Search by Breed', label:'Breeds' },
+                { value:'Search by Breeder', label:'Breeders' },
               ]}
             />
             <Dropdown
@@ -1522,7 +1647,7 @@ function SearchPage({ onNav, isLoggedIn, setLoggedIn }) {
           {hasFilters && (
             <div className="search-summary">
               <span>{mode === 'Search by Breed' ? `${filteredBreeds.length} breeds` : `${breederResults.length} breeders`} match your filters</span>
-              <button type="button" className="link-btn" onClick={()=>{setSpecies('Any'); setCountry('Any'); setQuery('');}}>Clear all</button>
+              <button type="button" className="link-btn" onClick={()=>{setSpecies('Canine'); setCountry('Any'); setQuery('');}}>Clear all</button>
             </div>
           )}
         </div>
@@ -1534,13 +1659,13 @@ function SearchPage({ onNav, isLoggedIn, setLoggedIn }) {
               <a href="#">See all →</a>
             </div>
             <div className="breed-grid">
-              {BREEDS.slice(0,4).map(b=>(
+              {popularBreeds.map(b=>(
                 <div className="breed-card" key={b} onClick={()=>onNav('breed')}>
                   <div
-                    className={"img" + (BREED_IMAGES[b] ? ' has-image' : '')}
+                    className={"img" + (BREED_IMAGES[b] ? ' has-image' : ' is-empty')}
                     data-label={b}
                     style={BREED_IMAGES[b] ? {backgroundImage: `url(${BREED_IMAGES[b]})`} : null}
-                  ></div>
+                  >{!BREED_IMAGES[b] && <span className="breed-card-ph">{Icon.cat}</span>}</div>
                   <h4>{b}</h4>
                   <div className="meta">
                     <span>{breederCountByBreed[b] || 0} breeders</span>
@@ -1568,10 +1693,10 @@ function SearchPage({ onNav, isLoggedIn, setLoggedIn }) {
                 {filteredBreeds.map(b=>(
                   <div className="breed-card" key={b+'-r'} onClick={()=>onNav('breed')}>
                     <div
-                      className={"img" + (BREED_IMAGES[b] ? ' has-image' : '')}
+                      className={"img" + (BREED_IMAGES[b] ? ' has-image' : ' is-empty')}
                       data-label={b}
                       style={BREED_IMAGES[b] ? {backgroundImage: `url(${BREED_IMAGES[b]})`} : null}
-                    ></div>
+                    >{!BREED_IMAGES[b] && <span className="breed-card-ph">{Icon.cat}</span>}</div>
                     <h4>{b}</h4>
                     <div className="meta">
                       <span>{breederCountByBreed[b] || 0} breeders</span>
@@ -1599,7 +1724,7 @@ function SearchPage({ onNav, isLoggedIn, setLoggedIn }) {
               <div className="breeder-grid">
                 {breederResults.map(b=>(
                   <div className="breeder-card" key={b.name} onClick={()=>onNav('profile')}>
-                    <div className="img"></div>
+                    <div className="img">{isResponsibleBreeder(b.name) && <img className="rb-seal" src={resolveAsset('responsibleBreederSeal','assets/responsible-breeder-seal.png')} alt="Orivet Responsible Breeder — Approved" />}</div>
                     <div className="top">
                       <div className="av">{b.initials}</div>
                       <div>
@@ -1608,7 +1733,7 @@ function SearchPage({ onNav, isLoggedIn, setLoggedIn }) {
                       </div>
                     </div>
                     <div className="badges">
-                      <span className="badge-soft is-positive">Verified</span>
+                      {isResponsibleBreeder(b.name) && <span className="badge-soft is-positive">Orivet Responsible Breeder</span>}
                       <span className="badge-soft">DNA tested</span>
                     </div>
                   </div>
@@ -1663,7 +1788,7 @@ function BreedPage({ onNav, isLoggedIn, setLoggedIn }) {
         <div className="breeder-grid">
           {BREEDERS.map(b=>(
             <div className="breeder-card" key={b.name} onClick={()=>onNav('profile')}>
-              <div className="img"></div>
+              <div className="img">{isResponsibleBreeder(b.name) && <img className="rb-seal" src={resolveAsset('responsibleBreederSeal','assets/responsible-breeder-seal.png')} alt="Orivet Responsible Breeder — Approved" />}</div>
               <div className="top">
                 <div className="av">{b.initials}</div>
                 <div>
@@ -1672,7 +1797,7 @@ function BreedPage({ onNav, isLoggedIn, setLoggedIn }) {
                 </div>
               </div>
               <div className="badges">
-                <span className="badge-soft is-positive">Verified</span>
+                {isResponsibleBreeder(b.name) && <span className="badge-soft is-positive">Orivet Responsible Breeder</span>}
                 <span className="badge-soft">DNA tested</span>
               </div>
             </div>
@@ -1812,59 +1937,65 @@ function BreederProfile({ onNav, isLoggedIn, setLoggedIn }) {
 
         {/* Hero */}
         <div className="bp-hero">
-          <div className="bp-hero-cover"></div>
+          <div className="bp-hero-band"></div>
           <div className="bp-hero-body">
             <div className="bp-avatar">{p.initials}</div>
             <div className="bp-id">
               <div className="bp-name-row">
                 <h1>{p.firstName} {p.lastName}</h1>
-                <span className="bp-verified" title="Verified Orivet Breeder">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.39 4.84L20 8l-4 3.9.94 5.48L12 14.77 7.06 17.38 8 11.9 4 8l5.61-1.16z"/></svg>
-                  Verified
-                </span>
+                <span className="badge-soft is-positive">Orivet Responsible Breeder</span>
               </div>
-              <div className="bp-tags">
+              <div className="bp-meta">
+                <span className="bp-species-pill">
+                  {speciesOf(p.breeds[0]) === 'Feline' ? Icon.cat : Icon.paw}
+                  {speciesOf(p.breeds[0]) === 'Feline' ? 'Cat breeder' : 'Dog breeder'}
+                </span>
                 {p.breeds.map(b => (
                   <span key={b} className="bp-breed-chip">{b}</span>
                 ))}
-              </div>
-              <div className="bp-loc">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                {p.state}, {p.country}
-                <span className="dot">·</span>
-                <span>Member since {p.memberSince} · {years} year{years===1?'':'s'}</span>
+                <span className="bp-meta-item">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  {p.state}, {p.country}
+                </span>
+                <span className="bp-meta-item">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  Member since {p.memberSince} · {years} yr{years===1?'':'s'}
+                </span>
               </div>
             </div>
-            <div className="bp-hero-cta">
-              <div className="bp-contact-row">
-                {p.contact.website && (
-                  <a href={p.contact.website} target="_blank" rel="noreferrer" className="bp-contact-pill" aria-label="Website">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15 15 0 0 1 0 20a15 15 0 0 1 0-20"/></svg>
-                  </a>
-                )}
-                {p.contact.instagram && (
-                  <a href="#" className="bp-contact-pill" aria-label="Instagram" title={p.contact.instagram}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>
-                  </a>
-                )}
-                {p.contact.facebook && (
-                  <a href="#" className="bp-contact-pill" aria-label="Facebook">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
-                  </a>
-                )}
-                {p.contact.email && (
-                  <a href={`mailto:${p.contact.email}`} className="btn btn-ghost btn-sm">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                    Email
+            <div className="bp-hero-right">
+              <img className="rb-seal-stamp" src={resolveAsset('responsibleBreederBadge','assets/responsible-breeder-badge.png')} alt="Orivet Responsible Breeder — Badge #7583" />
+              <div className="bp-hero-cta">
+                <div className="bp-contact-row">
+                  {p.contact.website && (
+                    <a href={p.contact.website} target="_blank" rel="noreferrer" className="bp-contact-pill" aria-label="Website">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15 15 0 0 1 0 20a15 15 0 0 1 0-20"/></svg>
+                    </a>
+                  )}
+                  {p.contact.instagram && (
+                    <a href="#" className="bp-contact-pill" aria-label="Instagram" title={p.contact.instagram}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>
+                    </a>
+                  )}
+                  {p.contact.facebook && (
+                    <a href="#" className="bp-contact-pill" aria-label="Facebook">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+                    </a>
+                  )}
+                  {p.contact.email && (
+                    <a href={`mailto:${p.contact.email}`} className="btn btn-ghost btn-sm">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                      Email
+                    </a>
+                  )}
+                </div>
+                {p.contact.phone && (
+                  <a className="btn btn-primary" href={`tel:${p.contact.phone.replace(/\s/g,'')}`}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                    {p.contact.phone}
                   </a>
                 )}
               </div>
-              {p.contact.phone && (
-                <a className="btn btn-primary" href={`tel:${p.contact.phone.replace(/\s/g,'')}`}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                  {p.contact.phone}
-                </a>
-              )}
             </div>
           </div>
         </div>
@@ -2019,7 +2150,7 @@ function AnimalPage({ onNav, isLoggedIn, setLoggedIn, selectedAnimal }) {
           <div className="bp-stat"><div className="num">{allReports.length}</div><div className="label">Public results</div></div>
           <div className="bp-stat"><div className="num">{animal.publicResults.traits.length}</div><div className="label">Traits</div></div>
           <div className="bp-stat"><div className="num">{animal.publicResults.diseases.length}</div><div className="label">Disease screens</div></div>
-          <div className="bp-stat"><div className="num">Orivet</div><div className="label">Verified by</div></div>
+          <div className="bp-stat"><div className="num">Orivet</div><div className="label">Tested by</div></div>
         </div>
 
         <div className="bp-section">
@@ -2140,7 +2271,7 @@ function ReportModal({ animal, breeder, group, result, onClose }) {
               <div className="report-doc-mark">{breeder.initials}</div>
               <div>
                 <div className="report-doc-breeder">{breeder.firstName} {breeder.lastName}</div>
-                <div className="report-doc-meta">{breeder.state}, {breeder.country} · Verified Orivet Breeder</div>
+                <div className="report-doc-meta">{breeder.state}, {breeder.country} · Orivet Responsible Breeder</div>
               </div>
             </div>
             <div className="report-doc-stamp">
@@ -2184,10 +2315,9 @@ function ReportModal({ animal, breeder, group, result, onClose }) {
 
           <footer className="report-doc-foot">
             <div>
-              <div className="rd-foot-line">Issued by Paw Print Pedigrees · an Orivet service</div>
-              <div className="rd-foot-meta">Published by {breeder.firstName} {breeder.lastName}. Verify the authenticity at pawprintpedigrees.com.</div>
+              <div className="rd-foot-line">Issued by Orivet Genetic Pet Care</div>
+              <div className="rd-foot-meta">Published by {breeder.firstName} {breeder.lastName}.</div>
             </div>
-            <div className="rd-foot-logo">PPP</div>
           </footer>
         </div>
       </div>
@@ -2195,21 +2325,337 @@ function ReportModal({ animal, breeder, group, result, onClose }) {
   );
 }
 
-/* ─────── ABOUT (placeholder) ─────── */
+/* ─────── RESPONSIBLE BREEDER PROGRAM ─────── */
+function ResponsibleBreeders({ onNav, isLoggedIn, setLoggedIn, onboardingComplete }) {
+  const badge = resolveAsset('responsibleBreederBadgeMasked','assets/responsible-breeder-badge-masked.png');
+  const seal = resolveAsset('responsibleBreederSeal','assets/responsible-breeder-seal.png');
+  const components = [
+    {
+      h: 'Health Screening',
+      d: 'Genetic testing of breeding stock to identify breed-specific conditions — so every litter starts with the best possible odds of healthy progeny.',
+      ic: (<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 21s-8-4.5-8-11a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 1.2-.27 2.32-.72 3.36"/><polyline points="13 13 15.5 15.5 21 10"/></svg>),
+    },
+    {
+      h: 'Transparency',
+      d: 'Genetic health results are shared with prospective buyers through Orivet\u2019s secure database — evidence anyone can verify, not claims they have to trust.',
+      ic: (<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>),
+    },
+    {
+      h: 'Standardised Collection',
+      d: 'Approved techniques for collecting and submitting genetic samples ensure every result is accurate, repeatable and lab-ready.',
+      ic: (<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 3h6"/><path d="M10 3v6.5L5.5 17a3 3 0 0 0 2.6 4.5h7.8a3 3 0 0 0 2.6-4.5L14 9.5V3"/><path d="M7.5 14h9"/></svg>),
+    },
+    {
+      h: 'Genetic Health Utilisation',
+      d: 'Insights are put to work — refining breeding strategies to reduce prevalent diseases without compromising temperament or the traits that define the breed.',
+      ic: (<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4c0 6 16 10 16 16"/><path d="M20 4c0 6-16 10-16 16"/><path d="M6.5 6.5h11"/><path d="M6.5 17.5h11"/><path d="M8.5 9.5h7"/><path d="M8.5 14.5h7"/></svg>),
+    },
+  ];
+  const criteria = [
+    'Demonstrated, exceptional breeding practices',
+    'Membership of a recognised breeding association',
+    'A track record of exemplary customer service',
+    'Genetic health testing of breeding stock',
+  ];
+  return (
+    <div>
+      <TopNav onDark onNav={onNav} active="responsible" isLoggedIn={isLoggedIn} setLoggedIn={setLoggedIn} onboardingComplete={onboardingComplete} />
+
+      {/* Hero */}
+      <section className="hero rb-hero">
+        <div className="hero-aurora" aria-hidden="true">
+          <span className="aurora-blob a1"></span>
+          <span className="aurora-blob a2"></span>
+          <span className="aurora-blob a3"></span>
+          <span className="hero-grain"></span>
+        </div>
+        <div className="page hero-content rb-hero-content">
+          <div className="rb-hero-text">
+            <div className="eyebrow">
+              <span className="eyebrow-pulse"></span>
+              Orivet Responsible Breeder Program
+            </div>
+            <h1>The gold standard, <em>trusted across the globe</em></h1>
+            <p className="sub">
+              Orivet partners with professional breeders across the United States, Australia, New Zealand and beyond — a network committed to the highest standards of responsibility in every breeding program.
+            </p>
+            <div className="rb-countries">
+              {['United States','Australia','New Zealand','Worldwide'].map(c=>(
+                <span className="rb-country" key={c}>{c}</span>
+              ))}
+            </div>
+            <div className="rb-hero-actions">
+              <a className="btn btn-light" href="https://www.orivet.com/breeder/responsible-breeder-program/form" target="_blank" rel="noreferrer">
+                Join the Program {Icon.arrowRight}
+              </a>
+              <a className="btn btn-ghost-light" href="https://www.orivet.com/breeder/responsible-breeder-program/search" target="_blank" rel="noreferrer">
+                Find accredited breeders
+              </a>
+            </div>
+          </div>
+          <div className="rb-hero-badge">
+            <span className="rb-hero-badge-glow" aria-hidden="true"></span>
+            <img src={seal} alt="Orivet Responsible Breeder logo" />
+          </div>
+        </div>
+      </section>
+
+      {/* Gold standard statement */}
+      <section className="section rb-standard">
+        <div className="page">
+          <div className="rb-standard-grid">
+            <div className="rb-standard-head">
+              <span className="rb-kicker">Global recognition</span>
+              <h2>Setting the benchmark for responsible breeding</h2>
+            </div>
+            <div className="rb-standard-body">
+              <p>The Orivet Responsible Breeder Program sets the gold standard in animal breeding by partnering with dedicated professionals worldwide.</p>
+              <p>Not every breeder qualifies. Recognition is earned — breeders must meet rigorous criteria proving their commitment to exceptional, health-focused breeding practices.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Key components */}
+      <section className="section rb-components-section">
+        <div className="page">
+          <div className="head">
+            <h2>Key components <em>of the program</em></h2>
+            <p className="lede">Four principles every Orivet Responsible Breeder is held to.</p>
+          </div>
+          <div className="rb-components">
+            {components.map((c,i)=>(
+              <article className="rb-comp-card" key={i}>
+                <span className="rb-comp-ghost" aria-hidden="true">{String(i+1).padStart(2,'0')}</span>
+                <div className="rb-comp-head">
+                  <div className="rb-comp-ic">{c.ic}</div>
+                  <span className="rb-comp-tag">Principle {String(i+1).padStart(2,'0')}</span>
+                </div>
+                <h3>{c.h}</h3>
+                <p>{c.d}</p>
+                <span className="rb-comp-rule" aria-hidden="true"></span>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Recognition: criteria + badge */}
+      <section className="section rb-recognition">
+        <div className="page">
+          <div className="rb-recognition-grid">
+            <div className="rb-card rb-criteria-card">
+              <span className="rb-kicker">How recognition works</span>
+              <h3>Earned, never assumed</h3>
+              <p>To be recognised, breeders typically belong to established breeding associations and are known for outstanding service to pet owners.</p>
+              <ul className="rb-criteria-list">
+                {criteria.map((c,i)=>(
+                  <li key={i}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    {c}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="rb-card rb-badge-card">
+              <img className="rb-badge-card-img" src={badge} alt="Orivet Responsible Breeder badge" />
+              <h3>Wear it with pride</h3>
+              <p>On successful application, breeders receive a unique Orivet Responsible Breeder logo to display — and appear on the validated Responsible Breeders list at Orivet Genetic Pet Care.</p>
+              <div className="rb-badge-meta">
+                <span className="rb-badge-meta-item">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                  Unique individual ID
+                </span>
+                <span className="rb-badge-meta-item">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/></svg>
+                  Listed on orivet.com
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Join / CTA */}
+      <section className="rb-join">
+        <div className="page">
+          <div className="rb-join-head">
+            <span className="rb-kicker rb-kicker-light">Join the program</span>
+            <h2>Leading the way in genetic health <em>&amp; breeding excellence</em></h2>
+          </div>
+          <div className="rb-join-cards">
+            <div className="rb-join-card">
+              <div className="rb-join-card-ic">{Icon.paw}</div>
+              <h3>For breeders</h3>
+              <p>Meet the criteria? Apply to display the Orivet Responsible Breeder logo and join the validated list of approved breeders.</p>
+              <a className="btn btn-light rb-join-btn" href="https://www.orivet.com/breeder/responsible-breeder-program/form" target="_blank" rel="noreferrer">
+                Apply now {Icon.arrowRight}
+              </a>
+            </div>
+            <div className="rb-join-card">
+              <div className="rb-join-card-ic">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </div>
+              <h3>For pet owners</h3>
+              <p>Find breeders who have earned recognition for transparent, health-focused practices — backed by genetic evidence.</p>
+              <a className="btn btn-ghost-light rb-join-btn" href="https://www.orivet.com/breeder/responsible-breeder-program/search" target="_blank" rel="noreferrer">
+                Search approved breeders {Icon.arrowRight}
+              </a>
+            </div>
+          </div>
+          <p className="rb-join-note">
+            Orivet reserves the right to make selections based on these criteria. While we strive to evaluate the ethics and practices of breeders in the program, we recommend buyers conduct their own due diligence before partnering with any breeder — Orivet cannot guarantee ethical standards beyond the scope of its assessments.
+          </p>
+        </div>
+      </section>
+
+      <footer className="foot">
+        <div className="page">
+          <div className="row">
+            <span>© Paw Print Pedigrees</span>
+            <span>An Orivet Genetic Pet Care service</span>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+/* ─────── ABOUT ─────── */
 function AboutPage({ onNav, isLoggedIn, setLoggedIn, onboardingComplete }) {
   return (
     <div>
-      <TopNav onNav={onNav} active="about" isLoggedIn={isLoggedIn} setLoggedIn={setLoggedIn} onboardingComplete={onboardingComplete} />
-      <div className="page">
-        <div className="placeholder-screen">
-          <div className="placeholder-tag">Coming next</div>
-          <h2>About Paw Print Pedigrees</h2>
-          <p>This page hasn't been designed yet. We'll build the About page together — it will live here and be linked from the "Learn more" CTA and the top nav.</p>
-          <div className="placeholder-actions">
-            <button className="btn btn-primary" onClick={()=>onNav('landing')}>← Back to Home {Icon.arrowRight}</button>
+      <TopNav onDark onNav={onNav} active="about" isLoggedIn={isLoggedIn} setLoggedIn={setLoggedIn} onboardingComplete={onboardingComplete} />
+
+      {/* Hero — dark aurora, matches Home & Responsible Breeders */}
+      <section className="hero about-hero">
+        <div className="hero-aurora" aria-hidden="true">
+          <span className="aurora-blob a1"></span>
+          <span className="aurora-blob a2"></span>
+          <span className="aurora-blob a3"></span>
+          <span className="hero-grain"></span>
+        </div>
+        <div className="page hero-content about-hero-content">
+          <div className="eyebrow">
+            <span className="eyebrow-pulse"></span>
+            About Paw Print Pedigrees
+          </div>
+          <h1>Trust you can <em>verify</em>.</h1>
+          <p className="sub">
+            A public, opt-in profile for your pets' genetic results — you decide what's shown, and you can change it anytime.
+          </p>
+          <div className="about-hero-tags">
+            <span>{Icon.paw} Dogs</span>
+            <span>{Icon.cat} Cats</span>
+            <span>{Icon.dna} Orivet-tested</span>
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* Statement */}
+      <section className="about-statement">
+        <div className="page">
+          <p className="about-statement-text">
+            It replaces <em>“trust me”</em> with <em>“here's the evidence.”</em>
+          </p>
+          <p className="about-statement-sub">
+            Paw Print Pedigrees turns a private Orivet report into a clean, buyer-friendly profile — without giving up control.
+          </p>
+        </div>
+      </section>
+
+      {/* You choose what's public */}
+      <section className="about-choose">
+        <div className="page">
+          <div className="about-section-head">
+            <span className="about-eyebrow">Opt-in by design</span>
+            <h2>You choose what's public.</h2>
+          </div>
+          <div className="about-choose-grid">
+            <div className="about-choose-card is-show">
+              <span className="about-choose-tag">Make public</span>
+              <ul>
+                {['Health screening outcomes','Trait genetics','Breed ancestry','A clean profile summary'].map((t,i)=>(
+                  <li key={i}><span className="about-choose-ic">{Icon.eye}</span>{t}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="about-choose-card is-private">
+              <span className="about-choose-tag">Keep private</span>
+              <ul>
+                {['Any individual result','Any animal','Any personal or kennel detail'].map((t,i)=>(
+                  <li key={i}><span className="about-choose-ic">{Icon.eyeOff}</span>{t}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Why it matters */}
+      <section className="about-why">
+        <div className="page">
+          <div className="about-section-head">
+            <span className="about-eyebrow">Why it matters</span>
+            <h2>Buyers want data, not adjectives.</h2>
+          </div>
+          <div className="about-why-grid">
+            {[
+              {h:'Verification', d:'Results derived from Orivet testing.'},
+              {h:'Interpretability', d:'Clear presentation for non-scientists.'},
+              {h:'Transparency', d:'Visible evidence of testing and intent.'},
+              {h:'Differentiation', d:'Proof you breed to measurable goals.'},
+            ].map((it,i)=>(
+              <div className="about-why-item" key={i}>
+                <h3>{it.h}</h3>
+                <p>{it.d}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Powered by Orivet — one-click control */}
+      <section className="about-orivet">
+        <div className="page">
+          <div className="about-orivet-inner">
+            <div className="about-orivet-mark">{Icon.dna}</div>
+            <div>
+              <span className="about-eyebrow">Managed in your Orivet account</span>
+              <h2>One link. One-click control.</h2>
+              <p>Link tested animals, choose what's visible, and publish or unpublish instantly — your data, your settings, your call.</p>
+              <button className="btn btn-light" onClick={()=>onNav(isLoggedIn ? (onboardingComplete?'myprofile':'kennel') : 'signup')}>Manage my profile {Icon.arrowRight}</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Closing CTA */}
+      <section className="about-cta">
+        <div className="page">
+          <div className="about-cta-grid">
+            <div className="about-cta-card">
+              <h3>For breeders</h3>
+              <p>Show your standards with evidence.</p>
+              <button className="btn btn-primary" onClick={()=>onNav('signup')}>Create your profile {Icon.arrowRight}</button>
+            </div>
+            <div className="about-cta-card is-alt">
+              <h3>For pet owners</h3>
+              <p>Find breeders you can trust.</p>
+              <button className="btn btn-ghost" onClick={()=>onNav('search')}>Explore breeders {Icon.arrowRight}</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer className="foot">
+        <div className="page">
+          <div className="row">
+            <div>© 2026 Paw Print Pedigrees — an Orivet service</div>
+            <div>Privacy · Terms · Contact</div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
@@ -2608,5 +3054,5 @@ function MyProfilePage({ onNav, isLoggedIn, setLoggedIn, onboardingComplete }) {
 }
 
 Object.assign(window, {
-  Landing, SignUp, KennelProfile, SearchPage, BreedPage, BreederProfile, AboutPage, MyProfilePage, AnimalPage,
+  Landing, SignUp, KennelProfile, SearchPage, BreedPage, BreederProfile, AboutPage, MyProfilePage, AnimalPage, ResponsibleBreeders,
 });
